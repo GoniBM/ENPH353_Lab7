@@ -55,7 +55,7 @@ class Gazebo_Linefollow_Env(gazebo_env.GazeboEnv):
 
         # cv2.imshow("raw", cv_image)
 
-        NUM_BINS = 3
+
         state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         done = False
 
@@ -85,17 +85,26 @@ class Gazebo_Linefollow_Env(gazebo_env.GazeboEnv):
 
         height, width = thresh.shape
 
-        state = [0] * 10
-
+        #Axis equals 0 is summing colums
         columnSum = np.sum(thresh,axis = 0)
+        #The line above will return an array of size width where each element is the sum of the pixels in that column
         if(np.max(columnSum) > 50):
+            # will find  the index whic corresponds to max value of which column of picture has most white pixels
             linePos = np.argmax(columnSum)
+            #Given 10 buckets whats the width of each as an integer
             bucketWidth = width // len(state)
+            #Divides which pixel col has most white by 10 in integer division
+            #Lets say linePos is 60 pixels in and the image is 100 pixels, it will end up in the 6th bucket etc.
+            #We need the clipping since if linePos is on the 100th pixel of an image that is 100 pixels wide 
+            #we would get that its in the 10th bucket which is out of range for 0-9     
             bucketIndex = min(linePos // bucketWidth, len(state)-1)
+            #Here we use one hot encoding to show where the line is
             state[bucketIndex] = 1
             done = False 
 
         else: 
+            #No line was detected (are threshold was not met) we increase timeout by one
+            #if this is the case for up to 30 pixels done becomes true which ends the episode
             self.timeout +=1 
             done = self.timeout > 30 
 
